@@ -18,13 +18,13 @@ def calc_probabilities(training_corpus):
     trigrams = col.Counter()
     for sent in training_corpus:
         sent = sent.replace(' \n','')
-        sent = '* %s STOP' % sent
+        #sent = '* %s STOP' % sent
         tokens = sent.split(' ')
         unigrams.update(nltk.ngrams(tokens, 1))
         bigrams.update(nltk.ngrams(tokens, 2))
         trigrams.update(nltk.ngrams(tokens, 3))
     # !ADDD - "STOP"
-    all_uni = sum(unigrams.values()) - unigrams[('*',)] - unigrams[('STOP',)]
+    all_uni = sum(unigrams.values())# - unigrams[('*',)]
     unigram_p = dict([(i[0][0], math.log(i[1]/all_uni, 2)) for i in unigrams.items()])
     bigram_p = dict([(' '.join(i[0]), math.log(i[1]/unigrams[(i[0][0], )], 2)) for i in bigrams.items()])
     trigram_p = dict([(' '.join(i[0]), math.log(i[1]/bigrams[(i[0][0], i[0][1])], 2)) for i in trigrams.items()])
@@ -64,10 +64,10 @@ def score(ngram_p, n, corpus):
     scores = []
     for sent in corpus:
         sent = sent.replace(' \n','')
-        sent = '* %s STOP' % sent
+        # sent = '* %s STOP' % sent
         tokens = sent.split(' ')
         ngrams = nltk.ngrams(tokens, n)
-        prob = sum([ngram_p[' '.join(i)] for i in ngrams if i!=('*')])
+        prob = sum([ngram_p[' '.join(i)] for i in ngrams if i not in [('*'), ('STOP')]])
         scores.append(prob)
     print(scores[:20])
     return scores
