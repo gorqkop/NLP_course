@@ -2,6 +2,7 @@ import sys
 import nltk
 import math
 import time
+import collections
 
 START_SYMBOL = '*'
 STOP_SYMBOL = 'STOP'
@@ -19,6 +20,17 @@ LOG_PROB_OF_ZERO = -1000
 def split_wordtags(brown_train):
     brown_words = []
     brown_tags = []
+    for sent in brown_train:
+        words = [START_SYMBOL]
+        tags = [START_SYMBOL]
+        for pare in sent.strip().split(' '):
+            pare = pare.split('/')
+            tags.append(pare[-1])
+            words.append('/'.join(pare[:-1]))
+        words.append(STOP_SYMBOL)
+        tags.append(STOP_SYMBOL)
+        brown_words.append(words)
+        brown_tags.append(tags)
     return brown_words, brown_tags
 
 
@@ -26,7 +38,15 @@ def split_wordtags(brown_train):
 # This function takes tags from the training data and calculates tag trigram probabilities.
 # It returns a python dictionary where the keys are tuples that represent the tag trigram, and the values are the log probability of that trigram
 def calc_trigrams(brown_tags):
-    q_values = {}
+    bigrams = []
+    for sent in brown_tags:
+        bigrams.extend(list(nltk.bigrams(sent)))
+    bigrams = dict(collections.Counter(bigrams))
+    trigrams = []
+    for sent in brown_tags:
+        trigrams.extend(list(nltk.trigrams(sent)))
+    trigrams = dict(collections.Counter(trigrams))
+    q_values = dict([(i[0], math.log(i[1], 2)-math.log(bigrams[i[0][:-1]], 2)) for i in trigrams.items()])
     return q_values
 
 # This function takes output from calc_trigrams() and outputs it in the proper format
@@ -45,7 +65,10 @@ def q2_output(q_values, filename):
 # brown_words is a python list where every element is a python list of the words of a particular sentence.
 # Note: words that appear exactly 5 times should be considered rare!
 def calc_known(brown_words):
-    known_words = set([])
+    data = []
+    [data.extend(x) for x in brown_words]
+    data = collections.Counter(data).items()
+    known_words = set([i[0] for i in data if i[1]>RARE_WORD_MAX_FREQ])
     return known_words
 
 # TODO: IMPLEMENT THIS FUNCTION
@@ -53,6 +76,9 @@ def calc_known(brown_words):
 # Returns the equivalent to brown_words but replacing the unknown words by '_RARE_' (use RARE_SYMBOL constant)
 def replace_rare(brown_words, known_words):
     brown_words_rare = []
+    for i in brown_words:
+        data = [x if x in known_words else RARE_SYMBOL for x in i]
+        brown_words_rare.append(data)
     return brown_words_rare
 
 # This function takes the ouput from replace_rare and outputs it to a file
@@ -69,9 +95,17 @@ def q3_output(rare, filename):
 # and the second is a tag, and the value is the log probability of the emission of the word given the tag
 # The second return value is a set of all possible tags for this data set
 def calc_emission(brown_words_rare, brown_tags):
-    e_values = {}
-    taglist = set([])
-    return e_values, taglist
+    taglist = collections.Counter()
+    variants = collections.Counter()
+    for n in range(len(brown_words_rare)):
+        taglist.update(brown_tags[n])
+        data = zip(brown_words_rare[n], brown_tags[n])
+        variants.update([x for x in data if x[0] not in [START_SYMBOL, STOP_SYMBOL, RARE_SYMBOL]])
+    taglist = dict(taglist)
+    variants = dict(variants)
+    e_values = dict([(i[0], math.log(i[1], 2)-math.log(taglist[i[0][1]], 2)) for i in variants.items()])
+    print(e_values[('America', 'NOUN')])
+    return e_values, set(taglist.keys())
 
 # This function takes the output from calc_emissions() and outputs it
 def q4_output(e_values, filename):
@@ -96,7 +130,17 @@ def q4_output(e_values, filename):
 # The return value is a list of tagged sentences in the format "WORD/TAG", separated by spaces. Each sentence is a string with a 
 # terminal newline, not a list of tokens. Remember also that the output should not contain the "_RARE_" symbol, but rather the
 # original words of the sentence!
+
+
 def viterbi(brown_dev_words, taglist, known_words, q_values, e_values):
+    for sent in brown_dev_words:
+        out = []
+        sent.insert(0, START_SYMBOL)
+        sent.append(STOP_SYMBOL)
+        for n in range(1, len(sent)-1):
+            if n == 1:
+                pass
+
     tagged = []
     return tagged
 

@@ -25,9 +25,9 @@ def calc_probabilities(training_corpus):
         trigrams.update(nltk.ngrams(tokens, 3))
     # !ADDD - "STOP"
     all_uni = sum(unigrams.values()) - unigrams[('*',)]
-    unigram_p = dict([(i[0][0], math.log(i[1]/all_uni, 2)) for i in unigrams.items()])
-    bigram_p = dict([(' '.join(i[0]), math.log(i[1]/unigrams[(i[0][0], )], 2)) for i in bigrams.items()])
-    trigram_p = dict([(' '.join(i[0]), math.log(i[1], 2) - math.log(bigrams[(i[0][0], i[0][1])], 2)) for i in trigrams.items()])
+    unigram_p = dict([(i[0], math.log(i[1]/all_uni, 2)) for i in unigrams.items()])
+    bigram_p = dict([(i[0], math.log(i[1]/unigrams[(i[0][0], )], 2)) for i in bigrams.items()])
+    trigram_p = dict([(i[0], math.log(i[1], 2) - math.log(bigrams[(i[0][0], i[0][1])], 2)) for i in trigrams.items()])
     return unigram_p, bigram_p, trigram_p
 
 # Prints the output for q1
@@ -72,9 +72,8 @@ def score(ngram_p, n, corpus):
             sent = '* %s STOP' % sent
         tokens = sent.split(' ')
         ngrams = nltk.ngrams(tokens, n)
-        prob = sum([ngram_p[' '.join(i)] for i in ngrams if i not in [('*'), ('STOP')]])
+        prob = sum([ngram_p[i] for i in ngrams ])
         scores.append(prob)
-    print(scores[:20])
     return scores
 
 # Outputs a score to a file
@@ -92,6 +91,26 @@ def score_output(scores, filename):
 # Like score(), this function returns a python list of scores
 def linearscore(unigrams, bigrams, trigrams, corpus):
     scores = []
+    for sent in corpus:
+        prob = 0
+        sent = sent.replace(' \n','')
+        sent = '* %s STOP' % sent
+        tokens = sent.split(' ')
+        ngrams = nltk.ngrams(tokens, 3)
+        for trigram in ngrams:
+            try:
+                prob+=0.333*trigrams[trigram]
+            except:
+                pass
+            try:
+                prob+=0.333*bigrams[trigram[1:]]
+            except:
+                pass
+            try:
+                prob+=0.333*unigrams[trigram[2:]]
+            except:
+                pass
+        scores.append(prob)
     return scores
 
 DATA_PATH = 'data/'
