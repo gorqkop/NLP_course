@@ -1,7 +1,7 @@
 from Assignment3.main import replace_accented
 from sklearn import svm
 from sklearn import neighbors
-import nltk
+import nltk, collections, numpy
 # don't change the window size
 window_size = 10
 
@@ -54,7 +54,15 @@ def vectorize(data, s):
     labels = {}
 
     # implement your code here
-
+    for lexelt in data:
+        for obsr in lexelt:
+            out = []
+            labels[obsr[0]]=obsr[-1]
+            out.extend(nltk.word_tokenize(obsr[1][-10:]))
+            out.extend(nltk.word_tokenize(obsr[3][:10]))
+            dat = collections.Counter()
+            dat.update(out)
+            vectors[obsr[0]]=[dat[x] for x in out]
     return vectors, labels
 
 
@@ -86,7 +94,11 @@ def classify(X_train, X_test, y_train):
     svm_clf = svm.LinearSVC()
     knn_clf = neighbors.KNeighborsClassifier()
 
-    # implement your code here
+    X_f, X_c = [], []
+    [(X_c.append(y_train[i[0]]), X_f.append(i[1])) for i in X_train.items()]
+    svm_clf.fit(X_f, X_c)
+    knn_clf.fit(X_f, X_c)
+
 
     return svm_results, knn_results
 
